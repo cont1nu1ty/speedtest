@@ -1,0 +1,3 @@
+interface IIPInformation {
+    processedString: string
+}
