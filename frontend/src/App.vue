@@ -6,18 +6,20 @@
             <p>{{ now.IpAddress }}</p>
             <p>Ping: {{ now.Ping.toFixed(2) }} ms</p>
             <p>Jitter: {{ now.Jitter.toFixed(2) }} ms</p>
-            <p>Download Speed: {{ downloadSpeed.toFixed(2) }} kb/s</p>
-            <p>Upload Speed: </p>
+            <p>Download Speed: {{ downloadSpeed.toFixed(2) }} KB/s</p>
+            <p>Upload Speed: {{ uploadSpeed.toFixed(2) }} KB/s</p>
         </div>
 
         <div>
-
+            <button @click="saveCSV">save csv</button>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import {onMounted, onUnmounted, ref} from "vue";
+import {exportCsv} from "@/utils/csv";
+import type {csvHeaderINTF} from "@/interfaces/csvHeaderINTF";
 
 interface IState {
     IpAddress: string,
@@ -31,17 +33,17 @@ const now = ref({
     Jitter: 0
 })
 const downloadSpeed = ref(0);
+const uploadSpeed = ref(0);
 let timer: number
-let timer2: number
+const networkData = ref<Map<string, string>[]>([])
 
 onMounted(() => {
     timer = setInterval(() => {
         testNetworkStatus();
-    }, 1000)
-
-    timer2 = setInterval(() => {
         testDownloadSpeed();
-    },3000)
+        testUploadSpeed();
+        addNetworkData();
+    }, 1000)
 })
 
 function testNetworkStatus() {
@@ -68,7 +70,6 @@ function testNetworkStatus() {
 
 function testDownloadSpeed() {
     const startTime = Date.now()
-    console.log(startTime)
     fetch("backend/garbage?ckSize=2")
         .then(response => {
             if (!response.ok) {
@@ -77,13 +78,75 @@ function testDownloadSpeed() {
             return response.blob()
         })
         .then((blob => {
-          console.log(blob.size);
+            // console.log(blob.size)
+            downloadSpeed.value = blob.size / 1024 / (Date.now() - startTime) * 1000
         }))
+}
+
+function testUploadSpeed() {
+
+    const fileSizeInBytes = 1024 * 1024; // 1MB
+    const buffer = new ArrayBuffer(fileSizeInBytes);
+    const dataView = new DataView(buffer);
+
+    for (let i = 0; i < fileSizeInBytes; i++) {
+        dataView.setUint8(i, i % 256);
+    }
+    const startTime = Date.now();
+    fetch("backend/empty", {
+        method: "PUT",
+        body: dataView
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Failed to fetch from server!");
+            }
+        })
+        .then(() => {
+            uploadSpeed.value = fileSizeInBytes / 1024 / (Date.now() - startTime) * 1000
+        })
+}
+
+function saveCSV() {
+    const columns: csvHeaderINTF[] = [
+        {
+            title: "time",
+            key: "time"
+        },
+        {
+            title: "ping",
+            key: "ping"
+        },
+        {
+            title: "jitter",
+            key: "jitter"
+        },
+        {
+            title: "download speed",
+            key: "download speed"
+        },
+        {
+            title: "upload speed",
+            key: "upload speed"
+        },
+    ]
+
+    exportCsv(columns, networkData.value, "network" + Date.now() + ".csv");
+}
+
+function addNetworkData() {
+    const data = new Map<string, string>();
+    data.set("time", new Date().getTime().toString());
+    data.set("ping", now.value.Ping.toString());
+    data.set("jitter", now.value.Jitter.toString());
+    data.set("download speed", downloadSpeed.value.toString());
+    data.set("upload speed", uploadSpeed.value.toString());
+    networkData.value.push(data);
+    //  console.log(networkData)
 }
 
 onUnmounted(() => {
     clearInterval(timer);
-    clearInterval(timer2);
 })
 </script>
 
