@@ -167,9 +167,10 @@ func garbage(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err != nil:
 		// 无效的请求参数chSize
-		log.Errorf("Invalid chunk size: %s", r.FormValue("ckSize"))
-		log.Warnf("Will use default value %d", chunks)
+		log.Debugf("Invalid param ckSize, using the default size: 4")
 	case i > MaxChunkSize:
+		log.Warnf("Invalid param ckSize: %d, using max chunk size: %d instead.",
+			i, MaxChunkSize)
 		chunks = MaxChunkSize
 	default:
 		chunks = int(i)

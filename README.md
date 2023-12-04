@@ -30,4 +30,6 @@ make container
 - `backend/garbage` 返回固定大小的垃圾数据
 - `backend/empty`接受任意大小的上传文件
 
+其中`backend/garbage`支持一个请求参数`ckSize`，指定返回垃圾数据的大小，单位是`MB`。
+
 
