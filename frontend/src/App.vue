@@ -69,18 +69,16 @@ function testNetworkStatus() {
 function testDownloadSpeed() {
     const startTime = Date.now()
     console.log(startTime)
-    fetch("backend/garbage")
+    fetch("backend/garbage?ckSize=2")
         .then(response => {
             if (!response.ok) {
                 throw new Error("Failed to fetch from server!");
             }
-            console.log(response)
-            return Promise.resolve();
+            return response.blob()
         })
-        .then(() => {
-            downloadSpeed.value = 1024 / (Date.now() - startTime) * 1000;
-            console.log(downloadSpeed)
-        })
+        .then((blob => {
+          console.log(blob.size);
+        }))
 }
 
 onUnmounted(() => {
