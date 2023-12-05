@@ -9,12 +9,11 @@ export function exportCsv(columns:csvHeaderINTF[], dataList:Map<string,string>[]
     for (let i = 0; i < dataList.length; i++) {
         const temp = [];
         for (let j = 0; j < keyArray.length; j++) {
-            console.log(dataList[i])
             temp.push(dataList[i].get(keyArray[j]));
         }
         str.push(temp.join(',') + '\n');
     }
-    console.log(str)
+
     let uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(str.join(''));
     let downloadLink = document.createElement('a');
     downloadLink.href = uri;

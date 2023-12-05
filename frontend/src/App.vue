@@ -1,17 +1,49 @@
 <template>
-    <div>
+    <div class="app">
         <h1>Proactive DDos Defender Speed Test</h1>
 
-        <div>
+        <div class="info-container">
             <p>{{ now.IpAddress }}</p>
-            <p>Ping: {{ now.Ping.toFixed(2) }} ms</p>
-            <p>Jitter: {{ now.Jitter.toFixed(2) }} ms</p>
-            <p>Download Speed: {{ downloadSpeed.toFixed(2) }} KB/s</p>
-            <p>Upload Speed: {{ uploadSpeed.toFixed(2) }} KB/s</p>
-        </div>
-
-        <div>
             <button @click="saveCSV">save csv</button>
+            <div style="height: 100%;width: 100%">
+                <p>Ping: {{ now.Ping.toFixed(2) }} ms</p>
+                <div class="echarts-container"
+                     style="width: 800px;height: 250px">
+                    <echarts-component name="Ping"
+                                       container-id="echarts-component-ping"
+                                       ref="chartPingRef"/>
+                </div>
+            </div>
+
+            <div style="height: 100%;width: 100%">
+                <p>Jitter: {{ now.Jitter.toFixed(2) }} ms</p>
+                <div class="echarts-container"
+                     style="width: 800px;height: 250px">
+                    <echarts-component name="Jitter"
+                                       container-id="echarts-component-jitter"
+                                       ref="chartJitterRef"/>
+                </div>
+            </div>
+
+            <div style="height: 100%;width: 100%">
+                <p>Download Speed: {{ downloadSpeed.toFixed(2) }} KB/s</p>
+                <div class="echarts-container"
+                     style="width: 800px;height: 250px">
+                    <echarts-component name="Download Speed(KB/s)"
+                                       container-id="echarts-component-download-speed"
+                                       ref="chartDownloadSpeedRef"/>
+                </div>
+            </div>
+
+            <div style="height: 100%;width: 100%">
+                <p>Upload Speed: {{ uploadSpeed.toFixed(2) }} KB/s</p>
+                <div class="echarts-container"
+                     style="width: 800px;height: 250px">
+                    <echarts-component name="Upload Speed(KB/s)"
+                                       container-id="echarts-component-upload-speed"
+                                       ref="chartUploadSpeedRef"/>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -20,12 +52,7 @@
 import {onMounted, onUnmounted, ref} from "vue";
 import {exportCsv} from "@/utils/csv";
 import type {csvHeaderINTF} from "@/interfaces/csvHeaderINTF";
-
-interface IState {
-    IpAddress: string,
-    Ping: number,
-    Jitter: number
-}
+import EchartsComponent from "@/models/echartsComponent.vue";
 
 const now = ref({
     IpAddress: "",
@@ -34,8 +61,13 @@ const now = ref({
 })
 const downloadSpeed = ref(0);
 const uploadSpeed = ref(0);
-let timer: number
 const networkData = ref<Map<string, string>[]>([])
+let timer: number
+
+const chartPingRef = ref<{ chartData: [] }>()
+const chartJitterRef = ref<{ chartData: [] }>()
+const chartDownloadSpeedRef = ref<{ chartData: [] }>()
+const chartUploadSpeedRef = ref<{ chartData: [] }>()
 
 onMounted(() => {
     timer = setInterval(() => {
@@ -43,6 +75,7 @@ onMounted(() => {
         testDownloadSpeed();
         testUploadSpeed();
         addNetworkData();
+        updateCharts();
     }, 1000)
 })
 
@@ -122,11 +155,11 @@ function saveCSV() {
             key: "jitter"
         },
         {
-            title: "download speed",
+            title: "download speed(KB/s)",
             key: "download speed"
         },
         {
-            title: "upload speed",
+            title: "upload speed(KB/s)",
             key: "upload speed"
         },
     ]
@@ -142,7 +175,24 @@ function addNetworkData() {
     data.set("download speed", downloadSpeed.value.toString());
     data.set("upload speed", uploadSpeed.value.toString());
     networkData.value.push(data);
-    //  console.log(networkData)
+}
+
+function updateCharts() {
+    updateSingleChart(chartPingRef.value?.chartData, "ping");
+    updateSingleChart(chartJitterRef.value?.chartData, "jitter");
+    updateSingleChart(chartDownloadSpeedRef.value?.chartData, "download speed");
+    updateSingleChart(chartUploadSpeedRef.value?.chartData, "upload speed");
+}
+
+function updateSingleChart(chartData, attr) {
+    if (chartData.length > 30) {
+        chartData.shift();
+    }
+    const mapItem = networkData.value[networkData.value.length - 1]
+    const time = ~~mapItem.get('time');
+    const value = mapItem.get(attr);
+    const newData = [time, value];
+    chartData.push(newData);
 }
 
 onUnmounted(() => {
@@ -150,3 +200,14 @@ onUnmounted(() => {
 })
 </script>
 
+<style>
+.app {
+    width: 100%;
+    height: 100%;
+}
+
+.info-container {
+    width: 100%;
+    height: auto;
+}
+</style>
