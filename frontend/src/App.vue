@@ -127,7 +127,7 @@ function testUploadSpeed() {
     }
     const startTime = Date.now();
     fetch("backend/empty", {
-        method: "PUT",
+        method: "POST",
         body: dataView
     })
         .then(response => {
