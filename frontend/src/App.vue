@@ -184,15 +184,22 @@ function updateCharts() {
     updateSingleChart(chartUploadSpeedRef.value?.chartData, "upload speed");
 }
 
-function updateSingleChart(chartData, attr) {
-    if (chartData.length > 30) {
-        chartData.shift();
+function updateSingleChart(chartData: (number | string)[][] | undefined, attr: string) {
+    if (chartData != undefined) {
+        if (chartData.length > 30) {
+            chartData.shift();
+        }
+        const mapItem = networkData.value[networkData.value.length - 1]
+        const timeStr = mapItem.get('time');
+        let time = 0;
+        if(timeStr != undefined) {
+            time = ~~timeStr;
+        }
+        const value = mapItem.get(attr);
+        const newData = [time, value];
+        // @ts-ignore
+        chartData.push(newData);
     }
-    const mapItem = networkData.value[networkData.value.length - 1]
-    const time = ~~mapItem.get('time');
-    const value = mapItem.get(attr);
-    const newData = [time, value];
-    chartData.push(newData);
 }
 
 onUnmounted(() => {
