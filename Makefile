@@ -10,5 +10,6 @@ clean:
 	make -C frontend clean
 	$(RM) speedtest
 
-container: build
+container: build-frontend
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags="all=-N -l" -ldflags="-s -w" -o speedtest bin/main.go
 	docker build . -t ghcr.io/bupt-narc/speedtest:latest
