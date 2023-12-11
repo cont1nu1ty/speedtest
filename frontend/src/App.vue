@@ -84,6 +84,8 @@ function testNetworkStatus() {
     fetch("backend/getIP")
         .then(response => {
             if (!response.ok) {
+                now.value.Ping = 0
+                now.value.Jitter = 0
                 throw new Error("Failed to fetch from server!");
             }
 
@@ -101,9 +103,9 @@ function testNetworkStatus() {
         })
 }
 
-function testDownloadSpeed() {
-    const startTime = Date.now()
-    fetch("backend/garbage?ckSize=2")
+async function testDownloadSpeed() {
+    /*const startTime = Date.now()
+    fetch("backend/garbage?ckSize=6")
         .then(response => {
             if (!response.ok) {
                 throw new Error("Failed to fetch from server!");
@@ -111,12 +113,38 @@ function testDownloadSpeed() {
             return response.blob()
         })
         .then((blob => {
-            // console.log(blob.size)
+            console.log("startTime:" + startTime)
+            console.log("endTime:" + Date.now())
             downloadSpeed.value = blob.size / 1024 / (Date.now() - startTime) * 1000
-        }))
+            console.log(downloadSpeed.value)
+        }))*/
+    const response = await fetch("backend/garbage?ckSize=4");
+    const reader = response.body.getReader();
+    let totalSize = 0;
+    const startTime = Date.now()
+    let endTime = 0;
+
+    if(!response.ok) {
+        downloadSpeed.value = 0;
+        return;
+    }
+    const processData = (result) => {
+
+        if (result.done) {
+            endTime = Date.now();
+            downloadSpeed.value = totalSize / 1024 / (endTime - startTime) * 1000;
+            return;
+        }
+        // 读取下一个文件片段，重复处理步骤
+        const value = result.value; // Uint8Array
+        const length = value.length;
+        totalSize += length
+        return reader.read().then(processData);
+    };
+    reader.read().then(processData);
 }
 
-function testUploadSpeed() {
+async function testUploadSpeed() {
 
     const fileSizeInBytes = 1024 * 1024; // 1MB
     const buffer = new ArrayBuffer(fileSizeInBytes);
@@ -138,6 +166,20 @@ function testUploadSpeed() {
         .then(() => {
             uploadSpeed.value = fileSizeInBytes / 1024 / (Date.now() - startTime) * 1000
         })
+
+    /*const response = await fetch("backend/empty", {
+        method: "POST",
+        body: dataView
+    })
+    const writer = response.body.getWriter();
+    let totalSize = 0;
+    const startTime = Date.now()
+    let endTime = 0;
+    if(!response.ok) {
+        uploadSpeed.value = 0;
+        return;
+    }*/
+
 }
 
 function saveCSV() {
