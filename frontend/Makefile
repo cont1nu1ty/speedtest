@@ -8,7 +8,7 @@ all: build
 
 build:
 	$(NPM_BINARY) install
-	$(NPM_BINARY) run build
+	$(NPM_BINARY) run build-only
 
 clean:
 	rm -rf dist

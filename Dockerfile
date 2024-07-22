@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/static:nonroot
+FROM vcs.bupt-narc.cn/mtd/netutils
 
 WORKDIR /
 COPY ./speedtest /speedtest
